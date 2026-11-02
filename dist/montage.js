@@ -157,6 +157,7 @@ export function createMontageEditor() {
     const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, 240000);
     try {
       const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': body instanceof Blob ? 'application/octet-stream' : 'application/json' }, body, signal: controller.signal });
+      if (response.status === 401) throw new Error('서버 로그인 링크에서 알파 계정으로 로그인한 뒤 다시 시도하세요.');
       if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data.error || '처리하지 못했어요. 클립과 시간을 확인하고 다시 시도하세요.'); }
       await onSuccess(response, controller.signal);
     } catch (error) { status(error.name === 'AbortError' ? (timedOut ? '처리 시간이 길어 요청을 중단했어요. 더 짧은 영상으로 다시 시도하세요.' : '요청을 취소했어요. 다시 시작할 수 있어요.') : error.message); }

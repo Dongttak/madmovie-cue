@@ -71,7 +71,9 @@ protocol and demuxer allowlists remain in place. A timeout tears down the worker
 The API process itself needs separate OS protection: use `ops/cue-api.example.service` as a
 starting point and adjust only its application path. It applies an unprivileged user, private
 home/tmp/devices, read-only system, kernel protection and 768MiB/one-core/96-task bounds.
-The example does not configure a public reverse proxy, authentication, TLS or per-user quotas.
+The service example enables trusted-proxy authentication and persistent quotas. Configure
+the matching HTTPS proxy and account file before starting it; see [ACCESS.md](ACCESS.md).
+Without that proxy, POSTs fail closed. Local trusted development leaves these env vars unset.
 Do not enable public uploads until those controls are independently validated.
 
 ## Manual checks

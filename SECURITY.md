@@ -78,7 +78,8 @@ counts and production rollout evidence are recorded with the alpha release/PR.
 
 ### Still required before untrusted public uploads
 
-External HTTPS reachability, authentication and per-user render quotas are not implemented
-by this change. A public reverse proxy or an origin check is not a substitute for them.
+Alpha.3 adds proxy-managed alpha accounts, HTTPS-only server processing and persistent
+per-account rolling-hour quotas. See [access setup](ACCESS.md). External TCP 443 reachability
+is still blocked at this installation; local TLS checks do not establish public reachability.
 The alpha must not be treated as a hardened public upload service. Continue tracking these
 controls in issue #2. Updating CUE's media runtime does not patch other software on the host.

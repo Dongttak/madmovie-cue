@@ -29,11 +29,13 @@ class PublicSourceTests(unittest.TestCase):
         self.assertEqual(public.check(self.root), (2, []))
 
     def test_forced_media_private_catalog_and_credentials_are_blocked(self):
-        for path in ['materials/reference.txt', 'clip.mp4', '.env.local', 'ncs-catalog.json']:
+        paths = ['materials/reference.txt', 'clip.mp4', '.env.local', 'ncs-catalog.json',
+                 'usage.sqlite3', 'usage.sqlite3-journal', 'cue-alpha.htpasswd']
+        for path in paths:
             self.add(path, 'private')
         count, failures = public.check(self.root)
-        self.assertEqual(count, 4)
-        self.assertEqual(len(failures), 4)
+        self.assertEqual(count, len(paths))
+        self.assertEqual(len(failures), len(paths))
 
     def test_secret_detection_checks_index_not_worktree_and_does_not_echo_value(self):
         value = 'ghp_' + 'A' * 36

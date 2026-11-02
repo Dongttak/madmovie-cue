@@ -1,5 +1,8 @@
 export function createNcsEditor() {
   const $ = id => document.getElementById(id);
+  if (location.protocol === 'http:' && !['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) {
+    $('server-login').href = `https://${location.host}/api/ncs/access`;
+  }
   const select = $('ncs-track'), input = $('ncs-file');
   let tracks = [], outputUrl, inputUrl, controller, busy = false, lastSelectedId = '';
   const status = text => { $('ncs-status').textContent = text; };
@@ -76,6 +79,7 @@ export function createNcsEditor() {
       status('게임 영상을 보내고 NCS 음악을 입히는 중… 완료까지 잠시 기다려주세요.');
       const query = new URLSearchParams({ track: track.id, musicStart, length, videoStart });
       const response = await fetch(`/api/ncs/render?${query}`, { method: 'POST', headers: { 'Content-Type': 'application/octet-stream' }, body: file, signal: controller.signal });
+      if (response.status === 401) throw new Error('서버 로그인 링크에서 알파 계정으로 로그인한 뒤 다시 시도하세요.');
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
         throw new Error(error.error || '서버에서 영상을 만들지 못했어요. 잠시 뒤 다시 시도하세요.');
