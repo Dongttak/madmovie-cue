@@ -100,9 +100,13 @@ npm run check:public
 
 [기여·브랜치·Discord 운영 안내](CONTRIBUTING.md)를 참고하세요.
 GitHub Issues에는 버그, 편집 품질, 기능 제안 템플릿이 있습니다.
-Discord 주소·GitHub 저장소 URL은 실제 개설 후 안내합니다. 현재 연결된 것처럼 표시하지 않습니다.
+공개 저장소: https://github.com/Dongttak/madmovie-cue · 작업 기록: https://github.com/Dongttak/madmovie-cue/issues
 
-CI/CD와 GitHub Actions 워크플로는 아직 추가하지 않습니다.
+첫 알파 릴리스: https://github.com/Dongttak/madmovie-cue/releases/tag/v0.10.0-alpha.1
+Discord Webhook 연결은 아직 준비 중이며, 완료 전에는 알림이 전송된다고 표시하지 않습니다.
+
+CI/CD 워크플로는 추가하지 않았고, 원격 저장소의 GitHub Actions 실행도 비활성화했습니다.
+의존성 취약점 알림과 비공개 취약점 신고는 활성화했습니다.
 당장은 수동 검증 결과를 PR에 기록하고 검토한 버전만 수동 배포합니다.
 외부 기여가 늘면 PR의 타입·단위 검사를 실행하는 작은 CI부터 검토하고, 자동 배포는 별도로 결정합니다.
 
