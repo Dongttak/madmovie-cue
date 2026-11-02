@@ -1,0 +1,11 @@
+{
+  "name": "CUE impact punch",
+  "zoomPercent": 107,
+  "attackSeconds": 0.1,
+  "releaseSeconds": 0.25,
+  "glowThreshold": 82,
+  "glowRadius": 5,
+  "glowIntensity": 0.32,
+  "flashOpacity": 7,
+  "flashSeconds": 0.05
+}

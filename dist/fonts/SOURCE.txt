@@ -1,0 +1,4 @@
+Pretendard Variable
+Source: https://raw.githubusercontent.com/orioncactus/pretendard/7aeb0698819be2b4097dae8ec8fe6a795e5cf3ae/
+SHA256: 9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4
+License: SIL Open Font License 1.1 (OFL.txt)

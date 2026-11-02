@@ -1,0 +1,2 @@
+# Preserve the bundled third-party license text verbatim.
+dist/fonts/OFL.txt -whitespace

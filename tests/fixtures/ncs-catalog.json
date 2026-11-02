@@ -1,0 +1,26 @@
+[
+  {
+    "id": "invincible",
+    "title": "Synthetic fixture invincible",
+    "artist": "CUE tests",
+    "genre": "Test",
+    "page": "https://ncs.io/cue-test-invincible",
+    "url": "https://ncsmusic.s3.eu-west-1.amazonaws.com/tracks/cue-test-invincible.mp3"
+  },
+  {
+    "id": "blank",
+    "title": "Synthetic fixture blank",
+    "artist": "CUE tests",
+    "genre": "Test",
+    "page": "https://ncs.io/cue-test-blank",
+    "url": "https://ncsmusic.s3.eu-west-1.amazonaws.com/tracks/cue-test-blank.mp3"
+  },
+  {
+    "id": "symbolism",
+    "title": "Synthetic fixture symbolism",
+    "artist": "CUE tests",
+    "genre": "Test",
+    "page": "https://ncs.io/cue-test-symbolism",
+    "url": "https://ncsmusic.s3.eu-west-1.amazonaws.com/tracks/cue-test-symbolism.mp3"
+  }
+]

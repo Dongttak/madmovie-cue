@@ -1,0 +1,5 @@
+{
+  "blink": {"halfFrames": 4, "blurX": 2.2, "blurY": 0.7, "panPixels": 0},
+  "whip": {"halfFrames": 6, "blurX": 10, "blurY": 0.4, "panPixels": 24},
+  "match_cut": {"halfFrames": 1, "blendFrames": 2}
+}
