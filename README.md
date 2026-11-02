@@ -103,7 +103,9 @@ GitHub Issues에는 버그, 편집 품질, 기능 제안 템플릿이 있습니�
 공개 저장소: https://github.com/Dongttak/madmovie-cue · 작업 기록: https://github.com/Dongttak/madmovie-cue/issues
 
 첫 알파 릴리스: https://github.com/Dongttak/madmovie-cue/releases/tag/v0.10.0-alpha.1
-Discord Webhook 연결은 아직 준비 중이며, 완료 전에는 알림이 전송된다고 표시하지 않습니다.
+Discord의 지정 채널에 GitHub `issues` 이벤트를 직접 전달하도록 연결했습니다. GitHub Actions나 별도 CI/CD는 사용하지 않습니다.
+2026-11-02 [이슈 #3](https://github.com/Dongttak/madmovie-cue/issues/3) 생성 이벤트에 대해 Discord HTTP 204 성공 응답을 확인했습니다.
+Webhook URL과 채널의 비공개 정보는 저장소에 포함하지 않습니다.
 
 CI/CD 워크플로는 추가하지 않았고, 원격 저장소의 GitHub Actions 실행도 비활성화했습니다.
 의존성 취약점 알림과 비공개 취약점 신고는 활성화했습니다.
