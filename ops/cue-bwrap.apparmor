@@ -1,0 +1,5 @@
+abi <abi/4.0>,
+include <tunables/global>
+profile cue-bwrap /opt/cue-media/bwrap flags=(unconfined) {
+  userns,
+}

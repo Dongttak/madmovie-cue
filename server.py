@@ -13,6 +13,7 @@ import sys
 # File-based test imports need the same sibling-module path as direct execution.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import montage
+import media
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import URLError
 from urllib.parse import parse_qs, urlsplit
@@ -105,11 +106,11 @@ def fetch_music(track, output_path, deadline):
 
 def probe(path, kind, deadline):
     try:
-        result = subprocess.run([
+        result = media.run([
             "ffprobe", "-v", "error", "-protocol_whitelist", "file,pipe", "-format_whitelist", MEDIA_FORMATS,
             "-select_streams", f"{kind}:0",
             "-show_entries", "stream=codec_type,width,height:format=duration", "-of", "json", str(path),
-        ], capture_output=True, text=True, check=True, timeout=remaining(deadline))
+        ], directory=path.parent, capture_output=True, text=True, check=True, timeout=remaining(deadline))
         metadata = json.loads(result.stdout)
         duration = float(metadata["format"]["duration"])
         if not metadata.get("streams") or not math.isfinite(duration) or duration <= 0:
@@ -181,11 +182,11 @@ class Handler(BaseHTTPRequestHandler):
         record = {"duration": probe(music, "a", deadline)}
         if automatic:
             pcm = directory / "analysis.f32"
-            subprocess.run([
+            media.run([
                 "ffmpeg", "-nostdin", "-v", "error", "-y", "-protocol_whitelist", "file,pipe",
                 "-format_whitelist", MEDIA_FORMATS, "-i", str(music), "-map", "0:a:0", "-vn",
                 "-ac", "1", "-ar", "22050", "-f", "f32le", str(pcm),
-            ], capture_output=True, check=True, timeout=remaining(deadline))
+            ], directory=directory, capture_output=True, check=True, timeout=remaining(deadline))
             result = subprocess.run([
                 "/usr/bin/node", str(Path(__file__).parent / "ops/analyze_music.mjs"), str(pcm),
             ], capture_output=True, text=True, check=True, timeout=remaining(deadline))
@@ -348,7 +349,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise RequestError(400, "음악 시작 시간을 곡 길이 안으로 지정하세요.")
                 duration = min(length, video_duration - video_start, music_duration - music_start)
                 try:
-                    subprocess.run([
+                    media.run([
                         "ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-y", "-filter_threads", "2",
                         "-protocol_whitelist", "file,pipe", "-format_whitelist", MEDIA_FORMATS,
                         "-threads", "2", "-ss", str(video_start), "-i", str(game),
@@ -358,7 +359,7 @@ class Handler(BaseHTTPRequestHandler):
                         "-vf", "scale=w='max(2,trunc(min(720,1280*dar)/2)*2)':h='max(2,trunc(min(1280,720/dar)/2)*2)',setsar=1,pad=720:1280:(ow-iw)/2:(oh-ih)/2",
                         "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-threads", "2", "-r", "30", "-pix_fmt", "yuv420p",
                         "-c:a", "aac", "-b:a", "128k", "-ac", "2", "-movflags", "+faststart", str(output),
-                    ], capture_output=True, check=True, timeout=remaining(deadline))
+                    ], directory=directory, capture_output=True, check=True, timeout=remaining(deadline))
                 except subprocess.CalledProcessError:
                     raise RequestError(422, "쇼츠를 만들지 못했어요. 다른 영상이나 더 짧은 구간으로 시도하세요.") from None
                 self.send_video(output, f'CUE-{track["id"]}-shorts.mp4', deadline)

@@ -1,0 +1,13 @@
+{
+  "vendor": "BtbN/FFmpeg-Builds",
+  "tag": "autobuild-2026-11-01-12-49",
+  "asset": "ffmpeg-n9.0.2-42-gd7643a0fe3-linuxarm64-gpl-9.0.tar.xz",
+  "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-11-01-12-49/ffmpeg-n9.0.2-42-gd7643a0fe3-linuxarm64-gpl-9.0.tar.xz",
+  "sha256": "b45eb0c42d311d12f3bddcd7b3a29a3e7fcc2455076d13c79552d45b48d57c08",
+  "architecture": "aarch64",
+  "sourceDocumentation": "https://ffmpeg.org/download.html",
+  "binaries": {
+    "ffmpeg": "b1a11ee71ee30c590036ac4197d4a723b8189e8fd389b3f328b93b338062efe1",
+    "ffprobe": "8f89330711c7ce4976cecc8fc52053832a99e2850f33f9feccfe20c175dff264"
+  }
+}

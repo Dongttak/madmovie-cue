@@ -9,10 +9,11 @@ The CUE license grants no rights to music, gameplay recordings, tutorials or ref
 | TypeScript | Development-only type checking | Apache-2.0; https://github.com/microsoft/TypeScript |
 | Playwright | Development-only browser testing | Apache-2.0; https://github.com/microsoft/playwright |
 | FFmpeg / FFprobe | Separately installed rendering tools | Build-dependent LGPL/GPL; https://ffmpeg.org/legal.html |
+| Bubblewrap | Optional separately installed per-job sandbox | LGPL-2.1-or-later; https://github.com/containers/bubblewrap |
 | EffectCraft | Optional separately installed compositor | MIT OR Apache-2.0; https://github.com/storytold/effectcraft/tree/v0.17.0 |
 
-FFmpeg and EffectCraft executables are not bundled. The development host's FFmpeg reports
-GPL-2.0-or-later; inspect your own build with `ffmpeg -L` before redistributing executables
+FFmpeg and EffectCraft executables are not bundled. The unchanged system FFmpeg reports GPL-2.0-or-later, while the pinned CUE runtime reports
+GPL-3.0-or-later. Inspect your own build with `ffmpeg -L` before redistributing executables
 or container images. A CLI integration does not relicense the third-party executable as MIT.
 
 No NCS audio, provider catalog, pro footage, reference videos, rendered music videos or

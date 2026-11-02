@@ -1,6 +1,6 @@
 {
   "name": "madmovie-cue",
-  "version": "0.10.0-alpha.1",
+  "version": "0.10.0-alpha.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,7 +12,8 @@
     "test:server": "python3 tests/ncs-server.test.py && python3 tests/montage-server.test.py",
     "check:public": "python3 ops/check_public.py",
     "test:public": "python3 tests/public-source.test.py",
-    "test:security": "python3 tests/security.test.py"
+    "test:security": "python3 tests/security.test.py",
+    "test:media": "python3 tests/media.test.py"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",

@@ -1,8 +1,8 @@
 """Validate and arrange selected highlights; never repeat or discover game scenes."""
 import math
 import json
-import subprocess
 import wave
+import media
 
 FPS = 30
 MIN_FRAMES = 3
@@ -183,18 +183,18 @@ def render_segments(directory, paths, music, manifest, deadline, probe, remainin
     for i, (path, segment) in enumerate(zip(paths, manifest["segments"])):
         output = directory / f"part-{i}.mp4"
         frames = round(segment["duration"] * fps)
-        subprocess.run([
+        media.run([
             "ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-y", "-filter_threads", "2",
             "-protocol_whitelist", "file,pipe", "-format_whitelist", formats, "-threads", "2",
             "-ss", str(segment["sourceStart"]), "-i", str(path), "-map", "0:v:0", "-an", "-sn", "-dn",
             "-vf", f"fps={fps},{scale}", "-frames:v", str(frames),
             "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-threads", "2", "-pix_fmt", "yuv420p",
             "-video_track_timescale", "90000", str(output),
-        ], capture_output=True, check=True, timeout=remaining(deadline))
-        metadata = subprocess.run([
+        ], directory=directory, capture_output=True, check=True, timeout=remaining(deadline))
+        metadata = media.run([
             "ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=nb_frames,duration",
             "-of", "json", str(output),
-        ], capture_output=True, text=True, check=True, timeout=remaining(deadline))
+        ], directory=directory, capture_output=True, text=True, check=True, timeout=remaining(deadline))
         try:
             stream = json.loads(metadata.stdout)["streams"][0]
             complete = int(stream["nb_frames"]) == frames and abs(float(stream["duration"]) - frames / fps) < .001
@@ -205,17 +205,17 @@ def render_segments(directory, paths, music, manifest, deadline, probe, remainin
         pieces.append(output)
         if keep_game:
             sound = directory / f"sound-{i}.wav"
-            audio_probe = subprocess.run([
+            audio_probe = media.run([
                 "ffprobe", "-v", "error", "-protocol_whitelist", "file,pipe", "-format_whitelist", formats,
                 "-select_streams", "a:0", "-show_entries", "stream=codec_type", "-of", "json", str(path),
-            ], capture_output=True, text=True, check=True, timeout=remaining(deadline))
+            ], directory=directory, capture_output=True, text=True, check=True, timeout=remaining(deadline))
             if json.loads(audio_probe.stdout).get("streams"):
-                subprocess.run([
+                media.run([
                     "ffmpeg", "-nostdin", "-v", "error", "-protocol_whitelist", "file,pipe", "-format_whitelist", formats,
                     "-ss", str(segment["sourceStart"]), "-i", str(path), "-map", "0:a:0", "-vn",
                     "-af", f"asetpts=PTS-STARTPTS,apad,atrim=duration={segment['duration']}",
                     "-ar", "48000", "-ac", "2", str(sound),
-                ], capture_output=True, check=True, timeout=remaining(deadline))
+                ], directory=directory, capture_output=True, check=True, timeout=remaining(deadline))
             else:
                 with wave.open(str(sound), "wb") as silence:
                     silence.setparams((2, 2, 48000, 0, "NONE", "not compressed"))
@@ -254,5 +254,5 @@ def render_segments(directory, paths, music, manifest, deadline, probe, remainin
                  f"afade=t=out:st={max(0,length-.1)}:d=0.1"]
     args += ["-t", str(manifest["duration"]), "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
              "-movflags", "+faststart", str(output)]
-    subprocess.run(args, capture_output=True, check=True, timeout=remaining(deadline))
+    media.run(args, directory=directory, capture_output=True, check=True, timeout=remaining(deadline))
     return output
