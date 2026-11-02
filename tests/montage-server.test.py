@@ -268,7 +268,7 @@ class MontageServerTests(unittest.TestCase):
             self.assertEqual(len(pixel), 3)
             self.assertGreater(pixel[dominant], 80)
             self.assertTrue(all(pixel[dominant] > pixel[index] + 50 for index in range(3) if index != dominant), (time, list(pixel)))
-        boundary_pixels = subprocess.check_output(['ffmpeg', '-v', 'error', '-i', str(output), '-vf', "select='eq(n,29)+eq(n,30)+eq(n,59)+eq(n,60)',crop=100:100:(iw-100)/2:(ih-100)/2,scale=1:1", '-vsync', '0', '-f', 'rawvideo', '-pix_fmt', 'rgb24', 'pipe:1'])
+        boundary_pixels = subprocess.check_output(['ffmpeg', '-v', 'error', '-i', str(output), '-vf', "select='eq(n,29)+eq(n,30)+eq(n,59)+eq(n,60)',crop=100:100:(iw-100)/2:(ih-100)/2,scale=1:1", '-fps_mode', 'passthrough', '-f', 'rawvideo', '-pix_fmt', 'rgb24', 'pipe:1'])
         self.assertEqual(len(boundary_pixels), 12)
         for index, dominant in enumerate((2, 0, 0, 1)):
             pixel = boundary_pixels[index * 3:index * 3 + 3]

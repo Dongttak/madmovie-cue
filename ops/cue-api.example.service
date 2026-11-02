@@ -1,0 +1,32 @@
+[Unit]
+Description=CUE alpha renderer (local API)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/cue-app/current
+ExecStart=/usr/bin/python3 -B /opt/cue-app/current/server.py
+Environment=CUE_MEDIA_BIN=/opt/cue-media/current/bin
+Environment=CUE_BWRAP=/opt/cue-media/bwrap
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+MemoryMax=768M
+CPUQuota=100%
+TasksMax=96
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

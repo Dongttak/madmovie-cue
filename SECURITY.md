@@ -48,17 +48,37 @@ The public-source guard scans the Git index and is supplemented by a redacted Gi
 Bandit's remaining low-severity subprocess/assert findings require contextual review; an
 absence of high-severity scanner findings is not proof of safety.
 
-### Outstanding environment risk
+### Media runtime remediation — 2026-11-02
 
-The development/previous deployment host reported FFmpeg `7:6.1.1-3ubuntu5` during review.
-It predates the patched Ubuntu 24.04 package listed in
-[USN-8915-1](https://ubuntu.com/security/notices/USN-8915-1),
-`7:6.1.1-3ubuntu5+esm15`. That notice describes denial-of-service and potential code-execution
-issues in specially crafted media. Applicability of each exploit to CUE's permitted formats
-was not demonstrated. Do not assume application-level input checks fix native-library CVEs.
+The initial host package `7:6.1.1-3ubuntu5` was older than the Ubuntu fix in
+[USN-8915-1](https://ubuntu.com/security/notices/USN-8915-1). CUE no longer uses that
+system binary in its configured API service. The application-specific runtime now reports
+`n9.0.2-42-gd7643a0fe3-20261101`, from the immutable archive/checksum recorded in
+`ops/media-runtime.json`. The upstream CVE-2026-30754 fix commit
+`d03483bd265b68db00c9b90f6f48dcf61c5c300d` was verified to be an ancestor of this build's
+`d7643a0fe3` source commit. This is not a claim that every library/kernel CVE is eliminated.
 
-The available package candidate on that host was the same unpatched version, and Ubuntu
-Pro/ESM Apps was not attached. Updating or replacing the media-processing runtime and
-retesting it remains required before accepting untrusted public uploads. Publishing the
-source does not update the existing server or certify its security. Operating-system updates,
-TLS configuration and deployment hardening are separate from this source review.
+The distribution's bubblewrap `0.9.0-1ubuntu0.3` had reverted a sandbox setup fix, per
+[USN-8779-2](https://ubuntu.com/security/notices/USN-8779-2). CUE uses a separately built,
+non-setuid **bubblewrap 0.13.1**, newer than the upstream advisory's fixed version 0.12.0.
+Source hash, binary hash and compiler hardening are recorded in `ops/bwrap-runtime.json`.
+The old system tools remain untouched for other software; this remediation is CUE-specific.
+
+`media.py` now routes all API and montage FFmpeg/FFprobe calls through the selected runtime.
+With `CUE_BWRAP` configured, a missing tool or failed sandbox aborts processing; it never
+falls back to an unsandboxed process. Workers have separate namespaces, no external network,
+no host home/process view, cleared environment and only their job folder writable.
+The unprivileged service retains read-only-system and memory/CPU/task limits.
+See [deployment and isolation checks](RUNTIME.md).
+
+Manual verification includes source-range/render regressions, real sandbox file/network/
+environment tests, timeout termination, and synthetic video uploads under the actual service
+user and systemd restrictions. No exploit payloads were sent to the public service. Test
+counts and production rollout evidence are recorded with the alpha release/PR.
+
+### Still required before untrusted public uploads
+
+External HTTPS reachability, authentication and per-user render quotas are not implemented
+by this change. A public reverse proxy or an origin check is not a substitute for them.
+The alpha must not be treated as a hardened public upload service. Continue tracking these
+controls in issue #2. Updating CUE's media runtime does not patch other software on the host.

@@ -48,7 +48,7 @@ class PublicSourceTests(unittest.TestCase):
         import shutil
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            for name in ('server.py', 'montage.py'):
+            for name in ('server.py', 'montage.py', 'media.py'):
                 shutil.copyfile(ROOT / name, root / name)
             result = subprocess.run(['python3', '-c', 'import server; assert server.TRACKS == {}'], cwd=root, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)

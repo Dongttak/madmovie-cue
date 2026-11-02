@@ -1,0 +1,18 @@
+{
+  "version": "0.13.1",
+  "url": "https://github.com/containers/bubblewrap/releases/download/v0.13.1/bubblewrap-0.13.1.tar.xz",
+  "sha256": "0e85c8702248b8dd64144f594147553650cdd0e4c951690345faace79c217c4d",
+  "securityAdvisory": "https://github.com/containers/bubblewrap/security/advisories/GHSA-pxhw-h44j-8pfx",
+  "binarySHA256": "2339590afce1fcea62cbdc9104535b854fb5c24d239ac827d73b4dd434b5348b",
+  "build": {
+    "type": "release",
+    "pie": true,
+    "c_args": [
+      "-fstack-protector-strong",
+      "-D_FORTIFY_SOURCE=3"
+    ],
+    "link_args": [
+      "-Wl,-z,relro,-z,now"
+    ]
+  }
+}
