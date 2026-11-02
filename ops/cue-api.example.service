@@ -10,6 +10,10 @@ WorkingDirectory=/opt/cue-app/current
 ExecStart=/usr/bin/python3 -B /opt/cue-app/current/server.py
 Environment=CUE_MEDIA_BIN=/opt/cue-media/current/bin
 Environment=CUE_BWRAP=/opt/cue-media/bwrap
+Environment=CUE_REQUIRE_USER=1
+Environment=CUE_USAGE_DB=/var/lib/cue-render/usage.sqlite3
+StateDirectory=cue-render
+StateDirectoryMode=0700
 Restart=on-failure
 RestartSec=3
 UMask=0077

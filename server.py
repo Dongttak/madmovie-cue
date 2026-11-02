@@ -2,7 +2,10 @@
 """Local NCS music + uploaded game video renderer; audio is never served alone."""
 import json
 import math
+import os
 import re
+import sqlite3
+from contextlib import closing
 from pathlib import Path
 import socket
 import subprocess
@@ -299,11 +302,19 @@ class Handler(BaseHTTPRequestHandler):
         try:
             self.check_origin()
             parsed = urlsplit(self.path)
+            if parsed.path not in ("/api/ncs/plan", "/api/ncs/montage", "/api/ncs/render"):
+                raise RequestError(404, "요청한 기능을 찾지 못했어요.")
+            if self.server.require_user:
+                users = self.headers.get_all("X-CUE-User", [])
+                if (len(users) != 1 or not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", users[0])
+                        or self.headers.get("X-Forwarded-Proto") != "https"):
+                    raise RequestError(401, "HTTPS 주소에서 알파 계정으로 로그인하세요.")
+                maximum = MAX_JSON_BYTES if parsed.path == "/api/ncs/plan" else MAX_VIDEO_BYTES + MAX_JSON_BYTES + 4
+                size = self.content_length(maximum)
+                self.server.reserve_usage(users[0], parsed.path == "/api/ncs/plan", size)
             if parsed.path in ("/api/ncs/plan", "/api/ncs/montage"):
                 self.handle_montage(parsed.path)
                 return
-            if parsed.path != "/api/ncs/render":
-                raise RequestError(404, "요청한 기능을 찾지 못했어요.")
             query = parse_qs(parsed.query, keep_blank_values=True)
             if any(len(values) != 1 for values in query.values()):
                 raise RequestError(400, "음악과 시작 시간, 길이를 다시 확인하세요.")
@@ -372,7 +383,7 @@ class Handler(BaseHTTPRequestHandler):
             pass
         except URLError:
             self.send_json(502, {"error": "NCS 음악을 가져오지 못했어요. 잠시 후 다른 곡으로 다시 시도하세요."})
-        except (OSError, ValueError):
+        except (OSError, ValueError, sqlite3.Error):
             if not self.response_started:
                 self.send_json(500, {"error": "영상을 처리하지 못했어요. 파일을 확인하고 다시 시도하세요."})
         finally:
@@ -415,9 +426,32 @@ class BoundedHTTPServer(ThreadingHTTPServer):
         finally:
             self.connection_slots.release()
 
+    def reserve_usage(self, user, plan, size):
+        # Charge attempts before reading uploads; failed jobs also consume the quota.
+        now = time.time()
+        with closing(sqlite3.connect(self.usage_db, timeout=5)) as db, db:
+            db.execute("BEGIN IMMEDIATE")
+            db.execute("DELETE FROM usage WHERE at <= ?", (now - 3600,))
+            count, uploaded = db.execute(
+                "SELECT COALESCE(SUM(plan = ?), 0), COALESCE(SUM(bytes), 0) FROM usage WHERE user = ?",
+                (int(plan), user)).fetchone()
+            if count >= (30 if plan else 6) or uploaded + size > 500 * 1024 * 1024:
+                raise RequestError(429, "시간당 구간 확인 30회·영상 만들기 6회·전송량 500MB 제한이에요. 잠시 후 다시 시도하세요.")
+            db.execute("INSERT INTO usage VALUES (?, ?, ?, ?)", (user, now, int(plan), size))
+
 
 def make_server(host="127.0.0.1", port=5174):
+    require_user = os.environ.get("CUE_REQUIRE_USER", "0") == "1"
+    usage_db = os.environ.get("CUE_USAGE_DB", "")
+    if require_user:
+        if host != "127.0.0.1" or not Path(usage_db).is_absolute():
+            raise ValueError("Authenticated API requires loopback binding and an absolute CUE_USAGE_DB")
+        with closing(sqlite3.connect(usage_db)) as db, db:
+            db.execute("CREATE TABLE IF NOT EXISTS usage (user TEXT, at REAL, plan INTEGER, bytes INTEGER)")
+            db.execute("CREATE INDEX IF NOT EXISTS usage_at ON usage(at)")
     server = BoundedHTTPServer((host, port), Handler)
+    server.require_user = require_user
+    server.usage_db = usage_db
     server.daemon_threads = True
     server.render_slot = threading.BoundedSemaphore(1)
     server.analysis_cache = {}

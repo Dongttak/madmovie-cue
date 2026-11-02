@@ -32,3 +32,6 @@ ops/ncs-catalog-report.json
 *.ecproj
 *.log
 *.tsbuildinfo
+*.sqlite3
+*.sqlite3-*
+*.htpasswd
