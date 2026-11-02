@@ -51,11 +51,13 @@ Git에 스테이징한 후 `npm run check:public`을 실행하고 PR에 확인 �
 - `#feedback`: 사용 경험·편집 비교와 GitHub 이슈 링크
 - `#development`: 개발 논의, 이슈·PR 알림
 
-Discord의 GitHub 알림 연동은 `#development`에 이슈·PR·릴리스 이벤트만 보내도록 설정합니다.
-이는 CI/CD와 별개입니다. 전체 커밋·댓글 이벤트는 초기에 켜지 않습니다.
+현재는 사용자가 지정한 Discord 채널에 GitHub `issues` 이벤트만 직접 전달하도록 연결했습니다.
+이슈 생성 알림의 Discord HTTP 204 성공 응답을 확인했습니다. PR·릴리스 알림은 필요할 때 별도로 결정합니다.
+이 연동은 CI/CD와 별개이며, GitHub Actions는 계속 비활성화합니다.
 Webhook 관리는 신뢰하는 관리자에게만 허용하고 멘션·외부 앱 권한도 필요한 범위로 제한합니다.
 Webhook URL은 비밀값이며 이슈·브라우저 코드·문서에 적지 않습니다.
-앱의 Discord 알림 전송 코드나 실제 Webhook은 아직 연결하지 않았습니다.
+GitHub Webhook이 Discord의 GitHub 호환 엔드포인트로 직접 전달합니다. 앱 서버에는 알림 전송 코드를 추가하지 않았습니다.
+Webhook 비밀값은 로컬의 제한된 권한 파일과 GitHub Webhook 설정에만 보관하며 공개 문서에 넣지 않습니다.
 
 ## 미디어와 라이선스
 
