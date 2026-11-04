@@ -76,10 +76,12 @@ environment tests, timeout termination, and synthetic video uploads under the ac
 user and systemd restrictions. No exploit payloads were sent to the public service. Test
 counts and production rollout evidence are recorded with the alpha release/PR.
 
-### Still required before untrusted public uploads
+### Alpha operating limits
 
 Alpha.3 adds proxy-managed alpha accounts, HTTPS-only server processing and persistent
-per-account rolling-hour quotas. See [access setup](ACCESS.md). External TCP 443 reachability
-is still blocked at this installation; local TLS checks do not establish public reachability.
-The alpha must not be treated as a hardened public upload service. Continue tracking these
-controls in issue #2. Updating CUE's media runtime does not patch other software on the host.
+per-account rolling-hour quotas. See [access setup](ACCESS.md). TCP 443 ingress was restored
+on 2026-11-04; the operator confirmed access from their Mac and the public HTTPS route now
+responds with a valid certificate. HTTP page navigation redirects to HTTPS; plaintext
+processing remains rejected.
+The alpha still uses operator-managed accounts and must not be treated as a hardened
+unrestricted public upload service. Updating CUE's media runtime does not patch other software on the host.

@@ -11,7 +11,7 @@
 </head>
 <body>
   <main>
-    <header><a class="logo" href="./">CUE<span> / 음악 작업실</span></a><span class="version">STEP 08 · 교전 유지 · 와이드</span></header>
+    <header><a class="logo" href="./">CUE<span> / 음악 작업실</span></a><span class="version">ALPHA · 타임라인 · 선택적 강조</span></header>
     <section class="intro">
       <p class="eyebrow">좋은 컷은, 듣는 것부터.</p>
       <h1>장면이 터질 순간을 찾아보자.</h1>
@@ -47,7 +47,7 @@
     </section>
     <section class="clip-editor montage" aria-labelledby="mont-title">
       <div class="analysis-heading"><div><p class="eyebrow">ENGAGEMENT / 07</p><h2 id="mont-title">교전 흐름을 살려 영상 만들기</h2></div><span>1~8클립 · 최대 60초</span></div>
-      <p class="sample-intro">한 영상에서 교전 시작부터 마무리까지 골라보세요. 기본 모드는 선택한 구간 안을 자르거나 속도를 바꾸지 않아요. 여러 구간을 추가하면 지정한 순서로 연결해요.</p>
+      <p class="sample-intro">한 영상에서 교전 시작부터 마무리까지 골라보세요. 강조를 지정하지 않으면 선택한 구간 안을 자르거나 속도를 바꾸지 않아요. 여러 구간을 추가하면 지정한 순서로 연결해요.</p>
       <div class="clip-fields">
         <label>곡명·아티스트·장르 검색<input id="mont-search" type="search" placeholder="예: Royalty" disabled></label>
         <label>NCS 곡<select id="mont-track" disabled><option>목록 불러오는 중</option></select></label>
@@ -60,7 +60,7 @@
         <label>출력 프레임<select id="mont-fps"><option value="60">60fps</option><option value="30">30fps</option></select></label>
         <label class="clip-loop"><input id="mont-game-audio" type="checkbox" checked>게임 소리와 음악 함께 살리기</label>
       </div>
-      <p id="mont-mode-help" class="sample-intro">선택한 교전 안에 자동 컷·전환·슬로모션을 넣지 않아요. 와이드는 위아래 HUD 일부를 잘라 중앙 교전에 집중해요. 60fps는 원본에 없는 동작을 새로 만들지는 않아요.</p>
+      <p id="mont-mode-help" class="sample-intro">선택한 교전 안을 자동으로 자르지 않아요. 직접 고른 순간에만 줌·슬로모션을 넣어요. 와이드는 위아래 HUD 일부를 잘라 중앙 교전에 집중해요. 60fps는 원본에 없는 동작을 새로 만들지는 않아요.</p>
       <p class="sample-intro"><a id="mont-listen" href="https://ncs.io/" target="_blank" rel="noopener noreferrer">NCS 공식 듣기 ↗</a>에서 음악 시작 위치를 확인하세요. 게임 소리는 음악 아래에 섞고, 파일에 원본 소리가 없으면 음악만 사용해요.</p>
       <div id="mont-beat-settings" class="clip-fields" hidden><label>수동 BPM · 비우면 자동<input id="mont-bpm" type="number" min="30" max="300" step="0.1" placeholder="자동 추정" disabled></label><label>첫 박자 · 원곡 초, 수동 BPM에 적용<input id="mont-offset" type="number" min="0" step="0.001" value="0" disabled></label></div><div class="clip-fields"><label>교전 영상 추가<input id="mont-files" type="file" accept="video/*" multiple disabled></label></div>
       <p id="mont-files-summary" class="sample-intro">0 / 8개 · 합계 최대 150MB</p>
@@ -68,11 +68,24 @@
       <p id="mont-source-caption" class="sample-intro" hidden></p>
       <video id="mont-source" controls playsinline preload="metadata" hidden></video>
       <div id="mont-range-tools" class="clip-buttons" hidden><button id="mont-set-start" class="button secondary">현재 위치를 시작으로</button><button id="mont-set-end" class="button secondary">현재 위치를 끝으로</button></div>
-      <div class="clip-buttons"><button id="mont-plan" class="button primary" disabled>선택 구간 확인</button><button id="mont-render" class="button primary" disabled>매드무비 MP4 만들기</button><button id="mont-json" class="button secondary" disabled>배치 JSON 저장</button><button id="mont-cancel" class="button secondary" hidden>요청 취소</button><a id="mont-download" class="button secondary" hidden>완성 MP4 저장</a><button id="mont-retry" class="button secondary">목록 다시 불러오기</button></div>
+      <div id="mont-timeline-wrap" hidden>
+        <p class="sample-intro">음악 파형 · 클립 · 선택한 강조 지점. 클릭하거나 아래 슬라이더로 이동하세요. 파형은 ‘선택 구간 확인’ 후 표시돼요. 원본 미리보기에는 게임 소리만, 완성본에는 음악도 나와요.</p>
+        <canvas id="mont-timeline" aria-hidden="true"></canvas>
+        <input id="mont-seek" type="range" min="0" max="1" step="0.001" value="0" aria-label="편집 타임라인 재생 위치">
+        <p id="mont-time" role="status" class="sample-intro"></p>
+        <div class="clip-fields">
+          <label>선택 순간의 강조<select id="mont-accent-kind"><option value="focus">짧은 줌 · 속도 유지</option><option value="slow">부드러운 슬로모션 + 줌</option></select></label>
+          <label>강조 위치 · 원본 초<input id="mont-accent-time" type="number" min="0" step="0.01" disabled></label>
+        </div>
+        <div class="clip-buttons"><button id="mont-add-accent" class="button secondary">현재 위치를 강조</button><button id="mont-remove-accent" class="button secondary" disabled>선택 클립 강조 삭제</button></div>
+        <p class="sample-intro">클립당 한 지점만 직접 고르세요. 시작·끝에서 0.3초 이상 떨어진 순간에 적용돼요. 슬로모션은 앞뒤 속도를 이어주며 전체 길이가 0.3초 늘어나요. 게임 소리도 함께 느려지고 음악 속도는 유지돼요.</p>
+      </div>
+      <div class="clip-buttons"><button id="mont-plan" class="button primary" disabled>선택 구간 확인</button><button id="mont-render" class="button primary" disabled>매드무비 MP4 만들기</button><button id="mont-render-base" class="button secondary" disabled>강조 없는 기본본 만들기</button><button id="mont-json" class="button secondary" disabled>배치 JSON 저장</button><button id="mont-cancel" class="button secondary" hidden>요청 취소</button><a id="mont-download" class="button secondary" hidden>완성 MP4 저장</a><button id="mont-retry" class="button secondary">목록 다시 불러오기</button></div>
       <p id="mont-summary" class="sample-intro">교전의 시작·끝과 음악을 고른 뒤 선택 구간을 확인하세요.</p>
       <div class="mont-table-wrap"><table class="mont-table"><caption>컷 배치 미리보기 · 초</caption><thead><tr><th scope="col">클립</th><th scope="col">완성 영상 구간</th><th scope="col">원본 사용 구간</th></tr></thead><tbody id="mont-plan-rows"></tbody></table></div>
       <p id="mont-status" role="status" aria-live="polite">음악 목록을 불러오고 있어요.</p>
       <video id="mont-result" controls playsinline hidden></video>
+      <label id="mont-compare-label" hidden>완성본 비교<select id="mont-compare"><option value="accent">선택한 강조 적용본</option><option value="base">강조 없는 기본본</option></select></label>
       <label class="ncs-credit-label" for="mont-credit">게시할 때 설명란에 넣을 음악 출처</label><textarea id="mont-credit" readonly rows="4"></textarea>
       <p class="sample-intro">영상 파일은 만들기를 누르면 서버로 전송되고 작업 후 삭제돼요. 구간 확인 단계에는 영상 파일을 보내지 않아요. 교전 유지 모드는 선택한 시작·끝을 프레임 안쪽으로 맞춰 전부 사용해요. 합계 60초를 넘거나 음악이 모자라면 알려주며, 몰래 잘라내거나 반복하지 않아요. 와이드·가로·세로 설정에 따라 프레이밍이 달라져요.</p>
     </section>

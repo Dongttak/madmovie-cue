@@ -21,6 +21,47 @@ if not server_module.TRACKS:
 
 
 class MontageServerTests(unittest.TestCase):
+    def test_selective_accent_validation_clock_waveform_and_real_render(self):
+        montage = server_module.montage
+        request = {'track':'invincible','musicStart':0,'length':60,'mode':'continuity','fps':60,
+                   'layout':'wide','gameAudio':True,'clips':[{'duration':3,'start':0,'end':3,
+                   'accent':{'time':1.5,'kind':'slow'}}]}
+        with patch.object(server_module,'fetch_music',side_effect=self.music_fixture):
+            status,_,body=self.request('/api/ncs/plan',json.dumps(request).encode())
+            self.assertEqual(status,200,body)
+            plan=json.loads(body)
+            self.assertEqual(plan['duration'],3.3)
+            self.assertEqual(plan['segments'][0]['sourceDuration'],3)
+            self.assertEqual(len(plan['waveform']['peaks']),1200)
+            self.assertTrue(all(0 <= peak <= 1 for peak in plan['waveform']['peaks']))
+            source=Path(self.files.name)/'accent-source.mp4'
+            subprocess.run(['ffmpeg','-v','error','-f','lavfi','-i','testsrc2=size=320x180:rate=60',
+                            '-f','lavfi','-i','sine=frequency=880:sample_rate=48000','-t','3',
+                            '-c:v','libx264','-threads','1','-preset','ultrafast','-c:a','aac','-y',str(source)],check=True)
+            raw=source.read_bytes()
+            manifest={**request,'files':[{'size':len(raw)}],'segments':plan['segments']}
+            for kind,frames in [('slow',198),('focus',180)]:
+                segment=manifest['segments'][0]
+                segment['accent']['kind']=kind;segment['duration']=frames/60
+                status,_,body=self.request('/api/ncs/montage',self.envelope(manifest,[raw]),'application/octet-stream')
+                self.assertEqual(status,200,body[:500])
+                output=Path(self.files.name)/f'accent-{kind}.mp4';output.write_bytes(body)
+                probe=json.loads(subprocess.check_output(['ffprobe','-v','error','-show_streams','-of','json',str(output)]))
+                video=next(stream for stream in probe['streams'] if stream['codec_type']=='video')
+                audio=next(stream for stream in probe['streams'] if stream['codec_type']=='audio')
+                self.assertEqual(int(video['nb_frames']),frames)
+                self.assertAlmostEqual(float(audio['duration']),frames/60,delta=.03)
+                subprocess.run(['ffmpeg','-v','error','-i',str(output),'-f','null','-'],check=True)
+        for time in [-1,.1,2.9,float('nan')]:
+            with self.subTest(time=time),self.assertRaises(ValueError):
+                montage.validate_plan({**request,'clips':[{'duration':3,'accent':{'time':time,'kind':'slow'}}]})
+        bad={**manifest,'segments':[{**manifest['segments'][0],'duration':3.2}]}
+        with self.assertRaises(ValueError):montage.validate_manifest(bad)
+        for i in range(100):
+            t=3*i/100
+            out=montage.source_clock(t,1.5,True)
+            self.assertAlmostEqual(montage.inverse_clock(out,1.5,True,3),t,places=7)
+
     @classmethod
     def setUpClass(cls):
         cls.files = tempfile.TemporaryDirectory(prefix='cue-montage-test-')
