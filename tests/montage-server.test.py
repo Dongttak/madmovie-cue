@@ -34,6 +34,7 @@ class MontageServerTests(unittest.TestCase):
             self.assertEqual(plan['segments'][0]['sourceDuration'],3)
             self.assertEqual(len(plan['waveform']['peaks']),1200)
             self.assertTrue(all(0 <= peak <= 1 for peak in plan['waveform']['peaks']))
+            self.assertGreater(len(set(plan['waveform']['peaks'])), 3)
             source=Path(self.files.name)/'accent-source.mp4'
             subprocess.run(['ffmpeg','-v','error','-f','lavfi','-i','testsrc2=size=320x180:rate=60',
                             '-f','lavfi','-i','sine=frequency=880:sample_rate=48000','-t','3',
