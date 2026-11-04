@@ -194,3 +194,52 @@ test('one intact engagement is the default and preview positions become range bo
   await expect(page.locator('#mont-download')).toBeHidden();
   await expect(page.locator('#mont-render')).toBeDisabled();
 });
+
+test('one selected accent survives planning and basic/accent renders remain available for comparison', async ({ page }) => {
+  const manifests = []; let input;
+  await page.route('**/api/ncs/plan', route => {
+    input = route.request().postDataJSON();
+    const clip = input.clips[0], accent = clip.accent;
+    return route.fulfill({ json: { mode: 'continuity', fps: 60, duration: 3.3,
+      waveform: { duration: 30, peaks: Array(1200).fill(.5) },
+      segments: [{ fileIndex: 0, sourceStart: 0, sourceDuration: 3, duration: 3.3, timelineStart: 0, accent }] } });
+  });
+  await page.route('**/api/ncs/montage', route => {
+    const body = route.request().postDataBuffer(), length = body.readUInt32BE(0);
+    manifests.push(JSON.parse(body.subarray(4,4+length).toString()));
+    return route.fulfill({ contentType: 'video/mp4', body: combinedBytes });
+  });
+  await catalog(page, 'continuity');
+  await page.locator('#mont-files').setInputFiles(videos[0]);
+  await page.getByRole('button', { name: '클립 1 미리보기', exact: true }).click();
+  await expect.poll(() => page.locator('#mont-source').evaluate(video => video.readyState >= 1)).toBe(true);
+  await page.locator('#mont-source').evaluate(video => { video.currentTime = 1.5; });
+  await page.locator('#mont-accent-kind').selectOption('slow');
+  await page.locator('#mont-add-accent').click();
+  await expect(page.locator('#mont-accent-time')).toHaveValue('1.5');
+  await expect(page.locator('#mont-seek')).toHaveAttribute('max','3.3');
+  await page.locator('#mont-plan').click();
+  await expect(page.locator('#mont-render-base')).toBeEnabled();
+  const timelineBox = await page.locator('#mont-timeline').boundingBox();
+  const wrapperBox = await page.locator('#mont-timeline-wrap').boundingBox();
+  expect(timelineBox.y).toBeGreaterThan(wrapperBox.y);
+  expect(timelineBox.y + timelineBox.height).toBeLessThan(wrapperBox.y + wrapperBox.height);
+  expect(input.clips[0].accent).toEqual({ time: 1.5, kind: 'slow' });
+  await page.locator('#mont-render-base').click();
+  await expect(page.locator('#mont-download')).toBeVisible();
+  await expect(page.locator('#mont-render')).toBeEnabled();
+  await page.locator('#mont-render').click();
+  await expect(page.locator('#mont-compare option:not(:disabled)')).toHaveCount(2);
+  expect(manifests[0].segments[0]).toEqual({ fileIndex: 0, sourceStart: 0, duration: 3, timelineStart: 0 });
+  expect(manifests[1].segments[0].accent).toEqual({ time: 1.5, kind: 'slow' });
+  await page.locator('#mont-compare').selectOption('base');
+  await expect(page.locator('#mont-download')).toHaveAttribute('download',/baseline/);
+  await page.locator('#mont-compare').selectOption('accent');
+  await expect(page.locator('#mont-download')).toHaveAttribute('download',/montage/);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.locator('#mont-remove-accent').click();
+  await expect(page.locator('#mont-accent-time')).toHaveValue('');
+  await expect(page.locator('#mont-render')).toBeDisabled();
+  await expect(page.locator('#mont-compare-label')).toBeHidden();
+});

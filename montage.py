@@ -2,6 +2,8 @@
 import math
 import json
 import wave
+import array
+import sys
 import media
 
 FPS = 30
@@ -37,6 +39,60 @@ def profile(data):
     return {"mode": mode, "layout": layout, "fps": fps, "gameAudio": game}
 
 
+def validate_accent(value, start, duration):
+    if not isinstance(value, dict) or value.get("kind") not in ("focus", "slow"):
+        raise ValueError("강조는 짧은 줌 또는 슬로모션으로 선택하세요.")
+    at = number(value.get("time"), start + .3, start + duration - .3)
+    return {"time": at, "kind": value["kind"]}
+
+
+def source_clock(t, hit, slow):
+    """Continuous source -> output clock; 1x at both edges, 0.5x at the hit."""
+    x = max(0, min(.6, t - hit + .3))
+    return t + (.3 * (x / .6 - math.sin(math.pi*x/.3)/(2*math.pi)) if slow else 0)
+
+
+def inverse_clock(t, hit, slow, duration):
+    lo, hi = 0, duration
+    for _ in range(35):
+        mid = (lo + hi) / 2
+        if source_clock(mid, hit, slow) < t:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
+def retime_sound(path, segment, fps, deadline, remaining):
+    """Use the same monotone clock for game audio; music keeps its native tempo."""
+    accent = segment.get("accent")
+    if not accent or accent["kind"] != "slow":
+        return
+    with wave.open(str(path), "rb") as source:
+        pcm = array.array('h', source.readframes(source.getnframes()))
+    if sys.byteorder != 'little':
+        pcm.byteswap()
+    hit = accent["time"] - segment["sourceStart"]
+    count = round(segment["duration"] * fps)
+    positions = [inverse_clock(i/fps, hit, True, segment["sourceDuration"]) * 48000 for i in range(count+1)]
+    output = array.array('h')
+    for j in range(round(segment["duration"]*48000)):
+        if j % 48000 == 0:
+            remaining(deadline)
+        frame, fraction = divmod(j*fps, 48000)
+        source = positions[frame] + (positions[frame+1]-positions[frame])*fraction/48000
+        k, part = int(source), source-int(source)
+        for channel in (0, 1):
+            a = pcm[min(2*k+channel, len(pcm)-2+channel)]
+            b = pcm[min(2*(k+1)+channel, len(pcm)-2+channel)]
+            output.append(round(a+(b-a)*part))
+    if sys.byteorder != 'little':
+        output.byteswap()
+    with wave.open(str(path), "wb") as target:
+        target.setparams((2, 2, 48000, 0, "NONE", "not compressed"))
+        target.writeframes(output.tobytes())
+
+
 def validate_plan(data):
     if not isinstance(data, dict) or not isinstance(data.get("track"), str):
         raise ValueError("목록에서 NCS 음악을 골라주세요.")
@@ -54,7 +110,12 @@ def validate_plan(data):
         end = number(clip.get("end", duration), 0, duration)
         if end - start < .1 - 1e-8:
             raise ValueError("각 영상에는 시작 시간 이후 최소 0.1초가 남아야 해요.")
-        normalized.append({"duration": end, "start": start})
+        item = {"duration": end, "start": start}
+        if clip.get("accent") is not None:
+            if settings["mode"] != "continuity":
+                raise ValueError("선택적 강조는 교전 유지 모드에서 사용하세요.")
+            item["accent"] = validate_accent(clip["accent"], start, end-start)
+        normalized.append(item)
     bpm = data.get("bpm")
     if bpm is not None:
         bpm = number(bpm, 30, 300)
@@ -75,8 +136,13 @@ def plan_segments(request, analysis):
             end = math.floor(clip["duration"] * fps + 1e-7)
             if end - start < math.ceil(.1 * fps):
                 raise ValueError("각 선택 구간에는 최소 0.1초의 완전한 프레임이 필요해요.")
-            segments.append({"fileIndex": i, "sourceStart": start / fps, "duration": (end-start)/fps, "timelineStart": position/fps})
-            position += end-start
+            segment = {"fileIndex": i, "sourceStart": start / fps, "duration": (end-start)/fps, "timelineStart": position/fps}
+            if clip.get("accent"):
+                segment["accent"] = validate_accent(clip["accent"], start/fps, (end-start)/fps)
+                segment["sourceDuration"] = segment["duration"]
+                segment["duration"] += .3 if segment["accent"]["kind"] == "slow" else 0
+            segments.append(segment)
+            position += round(segment["duration"]*fps)
         if position > 60*fps:
             raise ValueError("선택한 교전이 60초를 넘어요. 각 구간의 끝을 직접 줄여주세요. 자동으로 잘라내지 않아요.")
         if position > math.floor(available_music*fps+1e-7):
@@ -158,7 +224,17 @@ def validate_manifest(data):
         frames = round(duration * fps)
         if abs(timeline - position / fps) > 1e-5 or abs(duration - frames / fps) > 1e-5:
             raise ValueError("배치가 출력 프레임과 맞지 않아요. 배치를 다시 생성하세요.")
-        normalized.append({"fileIndex": i, "sourceStart": start, "duration": frames / fps, "timelineStart": position / fps})
+        item = {"fileIndex": i, "sourceStart": start, "duration": frames / fps, "timelineStart": position / fps}
+        if segment.get("accent") is not None:
+            if settings["mode"] != "continuity":
+                raise ValueError("선택적 강조는 교전 유지 모드에서 사용하세요.")
+            source_duration = number(segment.get("sourceDuration"), .6, 60)
+            accent = validate_accent(segment["accent"], start, source_duration)
+            expected = source_duration + (.3 if accent["kind"] == "slow" else 0)
+            if abs(expected-duration) > 1e-5 or abs(source_duration*fps-round(source_duration*fps)) > 1e-5:
+                raise ValueError("강조 구간의 원본·출력 길이가 맞지 않아요. 배치를 다시 확인하세요.")
+            item.update(sourceDuration=source_duration, accent=accent)
+        normalized.append(item)
         position += frames
     if position > 60 * fps:
         raise ValueError("완성 영상은 60초 이내로 배치하세요.")
@@ -174,7 +250,7 @@ def render_segments(directory, paths, music, manifest, deadline, probe, remainin
         scale += ",crop=1280:600:0:60"
     for path, segment in zip(paths, manifest["segments"]):
         duration = probe(path, "v", deadline)
-        if segment["sourceStart"] + segment["duration"] > duration + 1e-5:
+        if segment["sourceStart"] + segment.get("sourceDuration", segment["duration"]) > duration + 1e-5:
             raise ValueError("배치 구간이 실제 영상 길이를 넘어요. 영상을 다시 읽고 배치를 생성하세요.")
     music_duration = probe(music, "a", deadline)
     if manifest["musicStart"] + manifest["duration"] > music_duration + 1e-5:
@@ -183,11 +259,25 @@ def render_segments(directory, paths, music, manifest, deadline, probe, remainin
     for i, (path, segment) in enumerate(zip(paths, manifest["segments"])):
         output = directory / f"part-{i}.mp4"
         frames = round(segment["duration"] * fps)
+        source_duration = segment.get("sourceDuration", segment["duration"])
+        filters = f"fps={fps},{scale}"
+        accent = segment.get("accent")
+        if accent:
+            hit = accent["time"]-segment["sourceStart"]
+            filters = "setpts=PTS-STARTPTS"
+            if accent["kind"] == "slow":
+                x = f"clip((PTS*TB-{hit:.9f}+.3),0,.6)"
+                filters += f",setpts='(PTS*TB+.3*({x}/.6-sin(PI*{x}/.3)/(2*PI)))/TB'"
+            out_hit = source_clock(hit, hit, accent["kind"] == "slow")
+            t = f"(on/{fps}-{out_hit:.9f})"
+            pulse = f"if(between({t},-.18,.45),.5*(1+cos(PI*{t}/if(lt({t},0),.18,.45))),0)"
+            size = "1280x600" if layout == "wide" else "1280x720" if layout == "landscape" else "720x1280"
+            filters += f",fps={fps},tpad=stop_mode=clone:stop_duration=0.1,{scale},zoompan=z='1+.08*{pulse}':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s={size}:fps={fps}"
         media.run([
             "ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-y", "-filter_threads", "2",
             "-protocol_whitelist", "file,pipe", "-format_whitelist", formats, "-threads", "2",
-            "-ss", str(segment["sourceStart"]), "-i", str(path), "-map", "0:v:0", "-an", "-sn", "-dn",
-            "-vf", f"fps={fps},{scale}", "-frames:v", str(frames),
+            "-ss", str(segment["sourceStart"]), "-t", str(source_duration), "-i", str(path), "-map", "0:v:0", "-an", "-sn", "-dn",
+            "-vf", filters, "-frames:v", str(frames),
             "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-threads", "2", "-pix_fmt", "yuv420p",
             "-video_track_timescale", "90000", str(output),
         ], directory=directory, capture_output=True, check=True, timeout=remaining(deadline))
@@ -213,9 +303,10 @@ def render_segments(directory, paths, music, manifest, deadline, probe, remainin
                 media.run([
                     "ffmpeg", "-nostdin", "-v", "error", "-protocol_whitelist", "file,pipe", "-format_whitelist", formats,
                     "-ss", str(segment["sourceStart"]), "-i", str(path), "-map", "0:a:0", "-vn",
-                    "-af", f"asetpts=PTS-STARTPTS,apad,atrim=duration={segment['duration']}",
+                    "-af", f"asetpts=PTS-STARTPTS,apad,atrim=duration={source_duration}",
                     "-ar", "48000", "-ac", "2", str(sound),
                 ], directory=directory, capture_output=True, check=True, timeout=remaining(deadline))
+                retime_sound(sound, segment, fps, deadline, remaining)
             else:
                 with wave.open(str(sound), "wb") as silence:
                     silence.setparams((2, 2, 48000, 0, "NONE", "not compressed"))

@@ -199,6 +199,12 @@ class Handler(BaseHTTPRequestHandler):
                 montage.number(bpm, 30, 300)
             montage.number(offset)
             record.update(bpm=bpm, offset=offset)
+            peaks = analysis.get("peaks", [])
+            if not isinstance(peaks, list) or len(peaks) > 1200:
+                raise ValueError("Invalid waveform metadata")
+            for peak in peaks:
+                montage.number(peak, 0, 1)
+            record["peaks"] = peaks
         self.server.analysis_cache[track["id"]] = record
         return record
 
@@ -218,8 +224,10 @@ class Handler(BaseHTTPRequestHandler):
                     track = TRACKS.get(request["track"])
                     if track is None:
                         raise RequestError(400, "목록에서 NCS 음악을 골라주세요.")
-                    analysis = self.music_analysis(track, directory, deadline, request["mode"] != "continuity" and request["bpm"] is None)
+                    analysis = self.music_analysis(track, directory, deadline, True)
                     plan = montage.plan_segments(request, analysis)
+                    if analysis.get("peaks"):
+                        plan["waveform"] = {"duration": analysis["duration"], "peaks": analysis["peaks"]}
                     self.server.render_slot.release()
                     owns_slot = False
                     self.send_json(200, plan)
