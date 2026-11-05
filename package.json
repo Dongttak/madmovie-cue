@@ -1,11 +1,11 @@
 {
   "name": "madmovie-cue",
-  "version": "0.10.0-alpha.5",
+  "version": "0.10.0-alpha.6",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "python3 -m http.server 5173 --bind 127.0.0.1 --directory dist",
-    "check": "node --check dist/ui.js && node --check dist/app.js && node --check dist/waveform.js && node --check dist/rhythm.js && node --check dist/demo.js && node --check dist/highlight.js && node --check dist/clip-editor.js && node --check dist/shorts.js && node --check dist/ncs.js && node --check dist/emphasis.js && node --check dist/montage.js && node --check ops/analyze_music.mjs",
+    "check": "node --check dist/music-preview.js && node --check dist/ui.js && node --check dist/app.js && node --check dist/waveform.js && node --check dist/rhythm.js && node --check dist/demo.js && node --check dist/highlight.js && node --check dist/clip-editor.js && node --check dist/shorts.js && node --check dist/ncs.js && node --check dist/emphasis.js && node --check dist/montage.js && node --check ops/analyze_music.mjs",
     "test": "node --test tests/*.test.js",
     "typecheck": "tsc --project tsconfig.json",
     "verify": "npm run check && npm run typecheck && npm test",
@@ -13,6 +13,7 @@
     "check:public": "python3 ops/check_public.py",
     "test:public": "python3 tests/public-source.test.py",
     "test:security": "python3 tests/security.test.py",
+    "test:preview": "python3 tests/preview-metadata.test.py",
     "test:media": "python3 tests/media.test.py"
   },
   "devDependencies": {

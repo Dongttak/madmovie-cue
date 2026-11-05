@@ -10,6 +10,7 @@ import re
 import time
 from urllib.parse import unquote, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.error import HTTPError
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_HOST = "ncsmusic.s3.eu-west-1.amazonaws.com"
@@ -78,6 +79,7 @@ class TrackPage(HTMLParser):
         self.downloads = []
         self.title = ""
         self.in_title = False
+        self.youtube_ids = set()
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
@@ -97,6 +99,37 @@ class TrackPage(HTMLParser):
     def handle_data(self, text):
         if self.in_title:
             self.title += text
+        self.youtube_ids.update(re.findall(
+            r"Watch:\s*https?://(?:youtu\.be/|(?:www\.)?youtube\.com/watch\?v=)([A-Za-z0-9_-]{11})(?![A-Za-z0-9_-])", text))
+
+
+class PreviewNoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, *args):
+        return None
+
+
+def preview_video_id(source, parser):
+    if parser.youtube_ids:
+        return next(iter(parser.youtube_ids)) if len(parser.youtube_ids) == 1 else None
+    # Newer official credits use Linkfire. Read that fixed host's HTML only.
+    links = set(re.findall(r"https?://ncs\.lnk\.to/([A-Za-z0-9_-]+)/youtube", source))
+    if len(links) != 1:
+        return None
+    try:
+        url = f"https://ncs.lnk.to/{next(iter(links))}/youtube"
+        with build_opener(PreviewNoRedirect()).open(Request(url, headers=HEADERS), timeout=15) as response:
+            text = response.read(2*1024*1024+1)
+        if len(text) > 2*1024*1024:
+            return None
+        text = text.decode('utf-8').replace('\\/', '/')
+    except HTTPError as error:
+        if error.code not in (301, 302, 303, 307, 308):
+            return None
+        text = error.headers.get('Location', '')
+    except (OSError, ValueError):
+        return None
+    ids = set(re.findall(r"https://(?:www\.youtube\.com/watch\?v=|youtu\.be/)([A-Za-z0-9_-]{11})(?![A-Za-z0-9_-])", text))
+    return next(iter(ids)) if len(ids) == 1 else None
 
 
 def verify(seed):
@@ -146,6 +179,9 @@ def verify(seed):
             raise ValueError("canonical path has no stable ASCII identifier")
         track = {"id": identifier, "title": title, "artist": artist, "page": parser.canonical[0], "url": url,
                  "genre": genre}
+        video = preview_video_id(source.decode('utf-8'), parser)
+        if video:
+            track["youtubeId"] = video
         return track, {"page": page, "status": "verified", "bytes": size, "contentType": content_type}
     except Exception as error:
         return None, {"page": page, "status": "excluded", "reason": f"{type(error).__name__}: {error}"}

@@ -26,7 +26,7 @@ def check(root):
         path = PurePosixPath(name)
         count += 1
         if (path.parts[0] in {'materials', '.venv', 'node_modules', 'test-results', '.git'}
-                or name in PRIVATE or path.suffix.lower() in MEDIA | {'.pem', '.key', '.sqlite3', '.htpasswd'}
+                or name in PRIVATE or name.startswith('ncs-catalog.json.') or path.suffix.lower() in MEDIA | {'.pem', '.key', '.sqlite3', '.htpasswd'}
                 or '.sqlite3-' in path.name
                 or (path.name.startswith('.env') and path.name != '.env.example')):
             failures.append((name, 'private/media/dependency file'))

@@ -30,7 +30,7 @@ class PublicSourceTests(unittest.TestCase):
 
     def test_forced_media_private_catalog_and_credentials_are_blocked(self):
         paths = ['materials/reference.txt', 'clip.mp4', '.env.local', 'ncs-catalog.json',
-                 'usage.sqlite3', 'usage.sqlite3-journal', 'cue-alpha.htpasswd']
+                 'usage.sqlite3', 'usage.sqlite3-journal', 'cue-alpha.htpasswd', 'ncs-catalog.json.next']
         for path in paths:
             self.add(path, 'private')
         count, failures = public.check(self.root)

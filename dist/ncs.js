@@ -1,3 +1,5 @@
+import { createMusicPreview } from './music-preview.js';
+
 export function createNcsEditor() {
   const $ = id => document.getElementById(id);
   if (location.protocol === 'http:' && !['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) {
@@ -5,6 +7,7 @@ export function createNcsEditor() {
   }
   const select = $('ncs-track'), input = $('ncs-file');
   let tracks = [], outputUrl, inputUrl, controller, busy = false, lastSelectedId = '';
+  const musicPreview = createMusicPreview('ncs', () => tracks.find(track => track.id === select.value), () => $('ncs-music-start').value);
   const status = text => { $('ncs-status').textContent = text; };
   function clearOutput() {
     $('ncs-result').pause(); $('ncs-result').removeAttribute('src'); $('ncs-result').load();
@@ -26,6 +29,7 @@ export function createNcsEditor() {
     const track = tracks.find(track => track.id === select.value);
     $('ncs-credit').value = track?.credit || '';
     $('ncs-listen').href = track?.page || 'https://ncs.io/';
+    musicPreview.update();
     refresh();
   }
   function filterTracks(preferred = select.value) {
@@ -64,8 +68,10 @@ export function createNcsEditor() {
     }
     refresh();
   });
+  $('ncs-music-start').addEventListener('change', musicPreview.stop);
   $('ncs-cancel').addEventListener('click', () => controller?.abort());
   $('ncs-render').addEventListener('click', async () => {
+    window.dispatchEvent(new Event('cue-stop-previews'));
     if (busy) return;
     const file = input.files[0], track = tracks.find(track => track.id === select.value);
     const musicStart = Number($('ncs-music-start').value), length = Number($('ncs-length').value), videoStart = Number($('ncs-video-start').value);

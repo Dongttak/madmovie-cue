@@ -38,8 +38,13 @@
         <label class="field" for="mont-search">곡명·아티스트·장르 검색<input id="mont-search" type="search" placeholder="예: Royalty, Mortals" disabled></label>
         <label class="field" for="mont-track">NCS 곡<select id="mont-track" disabled><option>목록 불러오는 중</option></select></label>
         <label class="field" for="mont-music-start">음악 시작 (초)<input id="mont-music-start" type="number" min="0" step="0.1" value="0" disabled></label>
+<div class="music-preview">
+<button id="mont-preview-open" class="button secondary" type="button" aria-controls="mont-preview-panel" aria-expanded="false" disabled><img class="icon" src="vendor/lucide/play.svg" alt="" width="18" height="18">시작 위치에서 미리듣기</button>
+<p id="mont-preview-note" class="field-help">공식 미리듣기 정보를 불러오는 중이에요.</p>
+<div id="mont-preview-panel" hidden><div id="mont-preview-player" class="preview-player"></div><button id="mont-preview-close" class="button ghost" type="button">미리듣기 닫기</button><p class="field-help">재생이 안 되면 아래 공식 페이지에서 들어주세요. 브라우저에 따라 재생 버튼을 한 번 더 눌러야 해요. 공식 영상과 완성본의 음원 타이밍은 조금 다를 수 있어요.</p></div>
+</div>
         <a id="mont-listen" class="text-link" href="https://ncs.io/" target="_blank" rel="noopener noreferrer">공식 페이지에서 듣기 <img class="icon" src="vendor/lucide/arrow-up-right.svg" alt="" aria-hidden="true" width="20" height="20"></a>
-        <p class="field-help">음원 파일을 제공하지 않아요. 음악은 완성 영상에서 확인할 수 있어요.</p>
+        <p class="field-help">음원 파일을 제공하지 않아요. 음악은 공식 미리듣기 또는 완성 영상에서 확인할 수 있어요.</p>
         <button id="mont-retry" class="button ghost">음악 목록 새로고침</button>
       </section>
       <section class="panel output-panel" aria-labelledby="output-settings-title">
@@ -166,6 +171,11 @@
         <label>게임 영상 · 최대 150MB<input id="ncs-file" type="file" accept="video/*" disabled></label>
         <label>영상 시작 (초)<input id="ncs-video-start" type="number" min="0" step="0.1" value="0" disabled></label>
       </div>
+<div class="music-preview">
+<button id="ncs-preview-open" class="button secondary" type="button" aria-controls="ncs-preview-panel" aria-expanded="false" disabled><img class="icon" src="vendor/lucide/play.svg" alt="" width="18" height="18">시작 위치에서 미리듣기</button>
+<p id="ncs-preview-note" class="field-help">공식 미리듣기 정보를 불러오는 중이에요.</p>
+<div id="ncs-preview-panel" hidden><div id="ncs-preview-player" class="preview-player"></div><button id="ncs-preview-close" class="button ghost" type="button">미리듣기 닫기</button><p class="field-help">재생이 안 되면 아래 공식 페이지에서 들어주세요. 브라우저에 따라 재생 버튼을 한 번 더 눌러야 해요. 공식 영상과 완성본의 음원 타이밍은 조금 다를 수 있어요.</p></div>
+</div>
       <p>곡의 구간은 <a id="ncs-listen" href="https://ncs.io/" target="_blank" rel="noopener noreferrer">NCS 공식 듣기 ↗</a>에서 확인해 시작 시간을 정하세요. 영상 원본 소리는 빼고 선택한 음악을 입혀요. 남은 영상이나 음악이 짧으면 그 길이에 맞춰요.</p>
       <video id="ncs-source" controls muted playsinline preload="metadata" hidden></video>
       <div class="clip-buttons"><button id="ncs-render" class="button primary" disabled>NCS 쇼츠 만들기</button><button id="ncs-cancel" class="button secondary" hidden>요청 취소</button><a id="ncs-download" class="button secondary" hidden>완성 MP4 저장</a><button id="ncs-retry" class="button secondary">목록 다시 불러오기</button></div>

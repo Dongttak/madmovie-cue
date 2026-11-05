@@ -193,3 +193,5 @@ footer { display: flex; justify-content: space-between; gap: 15px; color: var(--
   .mont-table { min-width: 350px; }footer { flex-direction: column; gap: 6px; }.inline-help summary { min-height: 32px; }.field-help { font-size: 12px; }
 }
 @media (prefers-reduced-motion: no-preference) { .button, .workspace-tab { transition: background-color .15s, border-color .15s; } }
+
+.music-preview { margin: 16px 0; }.preview-player iframe { display: block; width: 100%; min-width: 200px; height: 220px; border: 0; border-radius: 7px; background: #000; }.music-preview > .button { white-space: normal; }.quick-intro .preview-player { max-width: 640px; }.quick-intro .preview-player iframe { height: 360px; }@media(max-width:700px){.quick-intro .preview-player iframe{height:220px}}

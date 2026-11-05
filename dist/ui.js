@@ -16,7 +16,10 @@ export function createWorkspaceNavigation() {
       alert.textContent = '영상 작업이 진행 중이에요. 완료하거나 요청을 취소한 뒤 다른 작업으로 이동하세요.';
       alert.hidden = false; return;
     }
-    if (key !== selected) document.querySelectorAll('audio,video').forEach(media => media.pause());
+    if (key !== selected) {
+      document.querySelectorAll('audio,video').forEach(media => media.pause());
+      window.dispatchEvent(new Event('cue-workspace-change'));
+    }
     alert.hidden = true; selected = key;
     for (const tab of tabs) {
       const active = tab === next;

@@ -73,7 +73,9 @@ class NcsServerTests(unittest.TestCase):
         self.assertEqual(len(tracks), len(private))
         self.assertEqual({track['id'] for track in tracks}, set(by_id))
         for track in tracks:
-            self.assertTrue(set(track) <= {'id', 'title', 'artist', 'page', 'genre', 'credit'})
+            self.assertTrue(set(track) <= {'id', 'title', 'artist', 'page', 'genre', 'credit', 'youtubeId'})
+            if 'youtubeId' in by_id[track['id']]:
+                self.assertEqual(track['youtubeId'], by_id[track['id']]['youtubeId'])
             for field in ('title', 'artist', 'page', 'genre'):
                 self.assertEqual(track[field], by_id[track['id']][field])
             for credit_text in (track['title'], track['artist'], track['page']):
@@ -90,6 +92,8 @@ class NcsServerTests(unittest.TestCase):
         self.assertEqual(set(server_module.load_tracks(path)), {original['id']})
         invalid = [
             [],
+            [{**original, 'youtubeId': '../unsafe'}],
+            [{**original, 'youtubeId': 123}],
             [{**original, 'url': 'https://attacker.invalid/music.mp3'}],
             [{**original, 'page': 'https://attacker.invalid/track'}],
             [original, original],
