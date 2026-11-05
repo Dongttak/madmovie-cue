@@ -24,8 +24,7 @@ test.beforeAll(async ({}, testInfo) => {
 });
 
 async function openNcs(page) {
-  await page.goto('/');
-  await page.locator('.ncs-catalog summary').click();
+  await page.goto('/#quick');
 }
 
 test('catalog selection uploads only the local video and downloads a combined MP4', async ({ page }) => {

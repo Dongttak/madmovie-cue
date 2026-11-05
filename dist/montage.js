@@ -19,10 +19,11 @@ export function createMontageEditor() {
   }
   function refresh() {
     const locked = busy || loading;
-    for (const id of ['mont-search', 'mont-track', 'mont-files', 'mont-music-start', 'mont-length', 'mont-bpm', 'mont-offset', 'mont-mode', 'mont-layout', 'mont-fps', 'mont-game-audio']) $(id).disabled = locked || !tracks.length;
+    for (const id of ['mont-search', 'mont-track', 'mont-music-start', 'mont-length', 'mont-bpm', 'mont-offset']) $(id).disabled = locked || !tracks.length;
+    for (const id of ['mont-files', 'mont-upload', 'mont-mode', 'mont-layout', 'mont-fps', 'mont-game-audio']) $(id).disabled = locked;
     select.disabled = locked || !select.value;
     for (const control of $('mont-clips').querySelectorAll('button,input')) control.disabled = locked || control.dataset.boundary === 'true';
-    $('mont-plan').disabled = locked || !select.value || clips.length < (continuous() ? 1 : 2);
+    $('mont-plan').disabled = locked || !tracks.some(track => track.id === select.value) || clips.length < (continuous() ? 1 : 2);
     $('mont-set-start').disabled = $('mont-set-end').disabled = locked || !previewClip;
     $('mont-render').disabled = $('mont-json').disabled = locked || !plan;
     $('mont-render-base').disabled = locked || !plan || !plan.segments.some(segment => segment.accent);
@@ -32,6 +33,28 @@ export function createMontageEditor() {
     $('mont-seek').disabled = locked;
     $('mont-cancel').hidden = !busy;
     $('mont-retry').disabled = locked;
+    $('mont-empty').hidden = clips.length > 0;
+    for (const row of $('mont-clips').children) row.dataset.selected = String(clips[Number(row.dataset.index)] === previewClip);
+    const completed = Object.keys(outputs).length > 0;
+    const step = completed ? 3 : plan ? 2 : clips.length ? 1 : 0;
+    document.querySelectorAll('[data-editor-step]').forEach((node, index) => {
+      if (index === step) node.setAttribute('aria-current', 'step'); else node.removeAttribute('aria-current');
+      node.dataset.done = String(index < step);
+    });
+    $('mont-ready').textContent = busy ? '처리 중' : completed ? '저장 가능' : plan ? '선택 구간 확인됨' : clips.length ? '구간 확인 필요' : '영상 추가 대기';
+    $('mont-next').textContent = !clips.length ? '먼저 교전 영상을 추가해보세요.'
+      : !tracks.some(track => track.id === select.value) ? '음악을 선택하면 구간 확인과 영상 만들기를 진행할 수 있어요.'
+      : !plan ? '교전의 시작·끝을 정하고 ‘선택 구간 확인’을 눌러주세요.'
+      : completed ? '완성본을 확인하고 저장하세요. 강조본과 기본본을 모두 만들면 비교할 수 있어요.'
+      : '준비됐어요. MP4를 만들거나 중요한 순간에 강조를 더해보세요.';
+  }
+  $('mont-upload').addEventListener('click', () => $('mont-files').click());
+  function openPreview(clip) {
+    sourceView = true; $('mont-result').pause(); previewClip = clip;
+    $('mont-source').dataset.clipUrl = clip.url; $('mont-source').onloadedmetadata = null;
+    $('mont-source').src = `${clip.url}#t=${clip.start},${clip.end}`;
+    $('mont-source').hidden = $('mont-source-caption').hidden = $('mont-range-tools').hidden = false;
+    updateCaption(); refresh(); drawTimeline();
   }
   function invalidate() {
     plan = null; clearOutput(); $('mont-plan-rows').replaceChildren();
@@ -43,7 +66,7 @@ export function createMontageEditor() {
       const row = document.createElement('li'); row.dataset.index = index;
       const title = document.createElement('strong'); title.textContent = `${index + 1}. ${clip.file.name}`;
       const info = document.createElement('span'); info.textContent = `${formatTime(clip.duration, true)} · ${(clip.file.size / 1024 / 1024).toFixed(1)} MB`;
-      const label = document.createElement('label'); label.textContent = '사용 시작 (초)';
+      const label = document.createElement('label'); label.textContent = '시작 (초)';
       const start = document.createElement('input'); start.type = 'number'; start.min = '0'; start.max = Math.max(0, clip.end - .1); start.step = '.1'; start.value = clip.start;
       start.setAttribute('aria-label', `클립 ${index + 1} 시작 (초)`);
       start.addEventListener('change', () => {
@@ -54,7 +77,7 @@ export function createMontageEditor() {
         clip.start = value; end.min = clip.start + .1; invalidate(); updateCaption();
       });
       label.append(start); row.append(title, info, label);
-      const endLabel = document.createElement('label'); endLabel.textContent = '사용 끝 (초)';
+      const endLabel = document.createElement('label'); endLabel.textContent = '끝 (초)';
       const end = document.createElement('input'); end.type = 'number'; end.min = clip.start + .1; end.max = clip.duration; end.step = '.1'; end.value = clip.end;
       end.setAttribute('aria-label', `클립 ${index + 1} 끝 (초)`);
       end.addEventListener('change', () => {
@@ -72,10 +95,7 @@ export function createMontageEditor() {
         node.addEventListener('click', action); actions.append(node);
       }
       button('미리보기', () => {
-        sourceView = true; $('mont-result').pause();
-        previewClip = clip; $('mont-source').dataset.clipUrl = clip.url; $('mont-source').onloadedmetadata = null; $('mont-source').src = `${clip.url}#t=${clip.start},${clip.end}`;
-        $('mont-source').hidden = $('mont-source-caption').hidden = $('mont-range-tools').hidden = false;
-        updateCaption(); refresh(); drawTimeline();
+        openPreview(clip);
       });
       button('위로', () => { [clips[index - 1], clips[index]] = [clips[index], clips[index - 1]]; invalidate(); showClips(); }, index === 0);
       button('아래로', () => { [clips[index], clips[index + 1]] = [clips[index + 1], clips[index]]; invalidate(); showClips(); }, index === clips.length - 1);
@@ -83,6 +103,7 @@ export function createMontageEditor() {
         $('mont-source').pause(); $('mont-source').removeAttribute('src'); $('mont-source').load(); $('mont-source').hidden = true;
         previewClip = null; $('mont-source-caption').hidden = $('mont-range-tools').hidden = true;
         URL.revokeObjectURL(clip.url); clips.splice(index, 1); invalidate(); showClips();
+        if (clips.length) openPreview(clips[Math.min(index, clips.length-1)]);
       });
       row.append(actions); $('mont-clips').append(row);
     });
@@ -117,14 +138,14 @@ export function createMontageEditor() {
         const amplitude = waveform.peaks[bin] || 0;
         ctx.fillRect(x, 40-amplitude*30, 1, Math.max(1, amplitude*60));
       }
-    } else { ctx.font = '12px sans-serif'; ctx.fillText('선택 구간 확인 후 실제 음악 파형 표시', 12, 38); }
+    } else { ctx.font = '12px Pretendard, sans-serif'; ctx.fillText('선택 구간 확인 후 실제 음악 파형 표시', 12, 38); }
     let current = 0;
     segments.forEach(segment => {
       const clip = clips[segment.fileIndex];
       const x = segment.timelineStart/duration*width, w = segment.duration/duration*width;
       ctx.fillStyle = clip === previewClip ? '#42583a' : '#263c40'; ctx.fillRect(x+1, 82, Math.max(1, w-2), 38);
       ctx.save(); ctx.beginPath(); ctx.rect(x+4, 84, Math.max(0, w-8), 34); ctx.clip();
-      ctx.fillStyle = '#e1e9d7'; ctx.font = '12px sans-serif'; ctx.fillText(`${segment.fileIndex+1} · ${clip.file.name}`, x+8, 105); ctx.restore();
+      ctx.fillStyle = '#e1e9d7'; ctx.font = '12px Pretendard, sans-serif'; ctx.fillText(`${segment.fileIndex+1} · ${clip.file.name}`, x+8, 105); ctx.restore();
       if (segment.accent) {
         const hit = outputAt(segment.accent.time, segment)/duration*width;
         ctx.fillStyle = '#ffb17d'; ctx.fillRect(hit-1, 6, 2, 115);
@@ -136,7 +157,7 @@ export function createMontageEditor() {
     $('mont-seek').max = duration; $('mont-seek').value = Math.min(duration, current);
     $('mont-seek').setAttribute('aria-valuetext', `${current.toFixed(2)}초 / ${duration.toFixed(2)}초`);
     const x = Math.max(0, Math.min(width-1, current/duration*width)); ctx.fillStyle = '#e1ff90'; ctx.fillRect(x, 0, 2, 125);
-    ctx.font = '11px sans-serif'; ctx.fillText('0s', 4, 143); ctx.fillText(`${duration.toFixed(2)}s`, Math.max(0,width-65), 143);
+    ctx.font = '11px Pretendard, sans-serif'; ctx.fillText('0s', 4, 143); ctx.fillText(`${duration.toFixed(2)}s`, Math.max(0,width-65), 143);
     $('mont-time').textContent = `${sourceView ? '원본 미리보기' : $('mont-compare').value === 'base' ? '기본 완성본' : '강조 완성본'} · ${current.toFixed(2)} / ${duration.toFixed(2)}초${previewClip ? ` · 원본 ${$('mont-source').currentTime.toFixed(2)}초` : ''}`;
   }
   function seekTimeline(position) {
@@ -173,6 +194,7 @@ export function createMontageEditor() {
   $('mont-accent-kind').addEventListener('change', () => { if (previewClip?.accent) setAccent(previewClip.accent.time); });
   $('mont-remove-accent').addEventListener('click', () => { if (busy || loading || !previewClip) return; delete previewClip.accent; invalidate(); updateCaption(); });
   new ResizeObserver(drawTimeline).observe($('mont-timeline'));
+  document.fonts.ready.then(drawTimeline);
   $('mont-result').addEventListener('timeupdate', drawTimeline);
   $('mont-result').addEventListener('play', () => { sourceView = false; $('mont-source').pause(); drawTimeline(); });
   $('mont-source').addEventListener('timeupdate', () => {
@@ -225,6 +247,7 @@ export function createMontageEditor() {
     try {
       for (const file of files) pending.push(await metadata(file));
       clips.push(...pending); invalidate(); showClips(); status('미리보기로 교전을 보고 시작·끝과 순서를 확인하세요.');
+      if (!previewClip) openPreview(clips[0]);
     } catch (error) { pending.forEach(clip => URL.revokeObjectURL(clip.url)); status(error.message); }
     finally { loading = false; refresh(); }
   });

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { createDemoFile } from '../../dist/demo.js';
 
 async function demo(page) {
-  await page.goto('/');
+  await page.goto('/#analyze');
   await page.locator('#sample-demo').click();
   await expect(page.locator('#bpm')).toBeEnabled();
 }
@@ -14,7 +14,7 @@ async function setNumber(page, id, value) {
 test('selection presets, keyboard movement, bounds and track replacement stay consistent', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/');
+  await page.goto('/#analyze');
   await expect(page.locator('#clip-preview')).toBeDisabled();
   await page.locator('#sample-demo').click();
   await expect(page.locator('#bpm')).toBeEnabled();

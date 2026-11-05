@@ -14,7 +14,7 @@ test.beforeAll(async ({}, testInfo) => {
 });
 
 async function prepare(page) {
-  await page.goto('/');
+  await page.goto('/#analyze');
   await expect(page.locator('#clip-save')).toHaveCount(0);
   await expect(page.locator('#shorts-download')).toBeHidden();
   await page.locator('#sample-demo').click();

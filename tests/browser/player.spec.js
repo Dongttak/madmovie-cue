@@ -13,7 +13,7 @@ function wav(samples = 8000 * 12) {
 test('load, play, seek, keyboard, replace, invalid-file recovery and mobile layout', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/');
+  await page.goto('/#analyze');
   await expect(page.locator('#play')).toBeDisabled();
   await page.locator('#file').setInputFiles(wav());
   await expect(page.locator('#play')).toBeEnabled();
@@ -46,7 +46,7 @@ test('load, play, seek, keyboard, replace, invalid-file recovery and mobile layo
 });
 
 test('a finished track resets the play label when seeking or loading another file', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#analyze');
   await page.locator('#file').setInputFiles(wav());
   await expect(page.locator('#play')).toBeEnabled();
   await page.locator('#audio').evaluate(async (audio) => {
@@ -79,7 +79,7 @@ test('rhythm analysis, manual grid correction and candidate audition', async ({ 
   track.name = '120bpm.wav';
   const requests = [];
   page.on('request', r => requests.push({ method: r.method(), url: r.url() }));
-  await page.goto('/');
+  await page.goto('/#analyze');
   await page.locator('#file').setInputFiles(track);
   await expect(page.locator('#bpm')).toBeEnabled();
   await expect.poll(async () => Math.abs(Number(await page.locator('#bpm').inputValue()) - 120)).toBeLessThan(1);
@@ -110,7 +110,7 @@ test('rhythm analysis, manual grid correction and candidate audition', async ({ 
 
 
 test('using the end of a fractional-length track keeps the first-beat form valid', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#analyze');
   await page.locator('#file').setInputFiles(wav(80005));
   await expect(page.locator('#bpm')).toBeEnabled();
   await page.locator('#bpm').fill('120');

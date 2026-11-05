@@ -56,6 +56,7 @@ test('clip reordering and source starts survive plan preview, JSON export and th
   await expect(page.locator('#mont-plan')).toBeDisabled();
   await page.locator('#mont-track').selectOption('blank');
   await expect(page.locator('#mont-credit')).toHaveValue(tracks[1].credit);
+  await page.getByText('배치 상세 보기', { exact: true }).click();
   await page.locator('#mont-files').setInputFiles(videos);
   await expect(page.locator('#mont-clips li')).toHaveCount(3);
   await page.getByRole('button', { name: '클립 3 위로', exact: true }).click();

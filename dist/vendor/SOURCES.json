@@ -1,0 +1,36 @@
+[
+  {
+    "package": "lucide-static",
+    "version": "1.68.0",
+    "source": "https://registry.npmjs.org/lucide-static/-/lucide-static-1.68.0.tgz",
+    "integrity": "sha512-sInxhr771A4UUu8D1gXZjj3mmGwqRTYDVNbfwN25Yx6vwA9Hnq9t+P9rF49UW8MirAe1iaYpqe+3vq99bbH8zg==",
+    "files": {
+      "clapperboard.svg": "c79a11e2b09e1e77ff2ba6a6a9921404ff2246a94a7f0fa21bfecdcba3fb657b",
+      "audio-lines.svg": "dc879f5073523d868acee4c196db7158c803f7b5787f054e4fa39b4559a3abc6",
+      "film.svg": "0f6b932e5d7bbc7410095a5fde699f697a4e1fe540698cee7555d923201cffbc",
+      "upload.svg": "ae4aee9dd4c846967104d1bbf775c8d626ced9497ff7e931063058e690d90132",
+      "download.svg": "ac76fd2d52198f3428f702f0acf8ebd8d09ee06523a929107a3c7de162ee9ff2",
+      "wand-sparkles.svg": "f1cfaa9ba02b3586940bdfc81a9b3473aa94914ec7fbe8b6092c19a7ca3a9244",
+      "arrow-up-right.svg": "3397b671abb779a5e2450b10b5b8f716f0c5a6d263fc8325c2cd1d4ef2b63e66",
+      "sliders-horizontal.svg": "0a1be154f7f6b665a1c6a9be906a56966be1ff7358cd0e2bee20ed30ed72b410",
+      "shield-check.svg": "79db3e6ac6a528d68dfcdbcb510b7d4ca38c9a012854a7d013d0b1079667d8af",
+      "plus.svg": "3a61f77e582f27dfbf96501ab76ab84d3d69fca5a47695e3f3debabd7578dd52",
+      "headphones.svg": "1186d35ff699c758ca2d96d64d4d5f1972847af529966ee9fc2f654b484b9e79",
+      "chevron-right.svg": "e5a97651a12ab6c5b89750ab65fec3d398962922040583bc79c0b4f519d2d51f",
+      "play.svg": "260288e55fbd5507502cd5ff3ce6aebcd3dcc5ec7e91172aae23ad5178c6806e",
+      "log-in.svg": "639a9259437831fad3cf3187a2acf6ceed271c622c00342ed4c8588fd6120395",
+      "LICENSE": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57"
+    }
+  },
+  {
+    "package": "@radix-ui/colors",
+    "version": "3.0.0",
+    "source": "https://registry.npmjs.org/@radix-ui/colors/-/colors-3.0.0.tgz",
+    "integrity": "sha512-FUOsGBkHrYJwCSEtWRCIfQbZG7q1e6DgxCIOe1SUQzDe/7rXXeA47s8yCn6fuTNQAj1Zq4oTFi9Yjp3wzElcxg==",
+    "files": {
+      "sage-dark.css": "575b93badb346bc45ee40527b306002bd87bc6d4843b1303f2cc81d9ed10952a",
+      "lime-dark.css": "e97b02d4fd70c150b40ff07df7a9b06fdd36b6dfd37b85782f8b1c102b54077c",
+      "LICENSE": "9c400881b9139571aa7acc3bd6e422a4f05223b4519169fb661298fb44bf228e"
+    }
+  }
+]
