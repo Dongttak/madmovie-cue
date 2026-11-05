@@ -5,16 +5,17 @@ test('the app offers only an original generated demo and external reference link
   const requests = [], errors = [];
   page.on('request', request => requests.push({ url: request.url(), method: request.method() }));
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/');
+  await page.goto('/#analyze');
   await expect(page.locator('[data-sample]')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Cipher 듣고 분석', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Crypto 듣고 분석', exact: true })).toHaveCount(0);
   expect(requests.every(request => request.url.startsWith('http://127.0.0.1:5173/'))).toBe(true);
-  await page.locator('.ncs-catalog summary').click();
+  await page.getByRole('tab', { name: /빠른 쇼츠/ }).click();
   const references = page.locator('.ncs-catalog li a');
   await expect(references).toHaveCount(3);
   expect(await references.evaluateAll(links => links.every(link => link.href.startsWith('https://www.youtube.com/watch?v=') && link.target === '_blank'))).toBe(true);
   await expect(page.locator('a[href="https://broke.ffm.to/1800"]')).toBeVisible();
+  await page.getByRole('tab', { name: /음원 분석/ }).click();
   await page.locator('#sample-demo').click();
   await expect(page.locator('#track-name')).toHaveText('CUE-demo-120bpm.wav');
   await expect(page.locator('#bpm')).toBeEnabled();
@@ -33,7 +34,7 @@ test('the app offers only an original generated demo and external reference link
 test('a local generated WAV is analyzed and played without uploading its contents', async ({ page }) => {
   const requests = [];
   page.on('request', request => requests.push({ url: request.url(), method: request.method() }));
-  await page.goto('/');
+  await page.goto('/#analyze');
   const file = createDemoFile();
   await page.locator('#file').setInputFiles({ name: 'local-original.wav', mimeType: 'audio/wav', buffer: Buffer.from(await file.arrayBuffer()) });
   await expect(page.locator('#track-name')).toHaveText('local-original.wav');

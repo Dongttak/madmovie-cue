@@ -5,6 +5,9 @@ The CUE license grants no rights to music, gameplay recordings, tutorials or ref
 
 | Component | Use | License / source |
 | --- | --- | --- |
+| Lucide static icons 1.68.0 | Bundled selected SVG icons | ISC, with Feather-derived icons under MIT; complete upstream license in `dist/vendor/lucide/LICENSE`, pinned hashes in `dist/vendor/SOURCES.json`; https://lucide.dev/license |
+| Radix Colors 3.0.0 | Bundled Sage/Lime dark CSS scales | MIT; complete license in `dist/vendor/radix/LICENSE`, pinned hashes in `dist/vendor/SOURCES.json`; https://github.com/radix-ui/colors |
+| axe-core / Playwright adapter | Development-only accessibility scanning | MPL-2.0; https://github.com/dequelabs/axe-core-npm |
 | Pretendard Variable | Bundled Korean font | SIL OFL 1.1; complete license in `dist/fonts/OFL.txt`, pinned source/hash in `dist/fonts/SOURCE.txt` |
 | TypeScript | Development-only type checking | Apache-2.0; https://github.com/microsoft/TypeScript |
 | Playwright | Development-only browser testing | Apache-2.0; https://github.com/microsoft/playwright |

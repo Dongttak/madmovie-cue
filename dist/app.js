@@ -1,4 +1,5 @@
 import { createMontageEditor } from './montage.js';
+import { createWorkspaceNavigation } from './ui.js';
 import { createNcsEditor } from './ncs.js';
 import { extractPeaks, formatTime } from './waveform.js';
 import { analyzeRhythm, beatGrid } from './rhythm.js';
@@ -270,6 +271,7 @@ audio.addEventListener('error', () => {
   if (audio.hasAttribute('src')) { enableControls(false); status('브라우저에서 재생하지 못했어요. MP3 또는 WAV로 다시 열어주세요.', true); }
 });
 document.addEventListener('keydown', (event) => {
+  if (document.getElementById('view-analyze').hidden) return;
   if (!ready || event.altKey || event.ctrlKey || event.metaKey || /INPUT|BUTTON|TEXTAREA|SELECT/.test(event.target.tagName)) return;
   if (event.code === 'Space') { event.preventDefault(); togglePlay(); }
   if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
@@ -295,3 +297,4 @@ draw();
 createNcsEditor();
 
 createMontageEditor();
+createWorkspaceNavigation();
