@@ -31,6 +31,7 @@ export function createMusicPreview(prefix, getTrack, getStart) {
   $('preview-close').addEventListener('click', stop);
   window.addEventListener('cue-stop-previews', stop);
   window.addEventListener('cue-workspace-change', stop);
+  document.addEventListener('play', stop, true);
   window.addEventListener('pagehide', stop);
   return { update, stop };
 }
