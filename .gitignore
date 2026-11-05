@@ -35,3 +35,4 @@ ops/ncs-catalog-report.json
 *.sqlite3
 *.sqlite3-*
 *.htpasswd
+/ncs-catalog.json.*

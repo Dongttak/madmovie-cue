@@ -1,5 +1,6 @@
 import { formatTime } from './waveform.js';
 import { continuitySegments, sourceAt, outputAt, withoutAccents } from './emphasis.js';
+import { createMusicPreview } from './music-preview.js';
 
 export function createMontageEditor() {
   const $ = id => document.getElementById(id);
@@ -8,6 +9,7 @@ export function createMontageEditor() {
   let outputs = {}, waveform = null, waveformTrack = '', sourceView = true, displayedOutput = 'accent';
   const continuous = () => $('mont-mode').value === 'continuity';
   const MAX_BYTES = 150 * 1024 * 1024 - 65536;
+  const musicPreview = createMusicPreview('mont', () => tracks.find(track => track.id === select.value), () => $('mont-music-start').value);
   const status = message => { $('mont-status').textContent = message; };
   function clearOutput() {
     $('mont-result').pause(); $('mont-result').removeAttribute('src'); $('mont-result').load();
@@ -202,6 +204,7 @@ export function createMontageEditor() {
     drawTimeline();
   });
   $('mont-source').addEventListener('play', () => {
+    window.dispatchEvent(new Event('cue-stop-previews'));
     sourceView = true; $('mont-result').pause();
     if (previewClip && ($('mont-source').currentTime < previewClip.start || $('mont-source').currentTime >= previewClip.end)) $('mont-source').currentTime = previewClip.start;
   });
@@ -265,11 +268,14 @@ export function createMontageEditor() {
     lastTrack = select.value;
     const track = tracks.find(track => track.id === select.value);
     $('mont-credit').value = track?.credit || ''; $('mont-listen').href = track?.page || 'https://ncs.io/'; refresh();
+    musicPreview.update();
   }
   $('mont-search').addEventListener('input', filterTracks); select.addEventListener('change', selected);
   for (const id of ['mont-music-start', 'mont-length', 'mont-bpm', 'mont-offset', 'mont-layout', 'mont-fps', 'mont-game-audio']) $(id).addEventListener('change', invalidate);
+  $('mont-music-start').addEventListener('change', musicPreview.stop);
   $('mont-cancel').addEventListener('click', () => controller?.abort());
   async function request(path, body, onSuccess, keepOutputs = false) {
+    window.dispatchEvent(new Event('cue-stop-previews'));
     busy = true; if (!keepOutputs) clearOutput(); refresh(); $('mont-source').pause(); $('mont-result').pause(); controller = new AbortController();
     let timedOut = false;
     const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, 240000);

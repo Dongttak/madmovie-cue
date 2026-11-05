@@ -56,6 +56,8 @@ def load_tracks(path):
             raise ValueError("Music source must be the official NCS bucket")
         if "genre" in row and not isinstance(row["genre"], str):
             raise ValueError("Invalid NCS genre")
+        if "youtubeId" in row and (not isinstance(row["youtubeId"], str) or not re.fullmatch(r"[A-Za-z0-9_-]{11}", row["youtubeId"])):
+            raise ValueError("Invalid official preview video ID")
         tracks[row["id"]] = row
         sources.add(row["url"])
     return tracks
@@ -297,6 +299,8 @@ class Handler(BaseHTTPRequestHandler):
             for track in TRACKS.values():
                 public = {key: track[key] for key in ("id", "title", "artist", "page")}
                 public["genre"] = track.get("genre", "")
+                if "youtubeId" in track:
+                    public["youtubeId"] = track["youtubeId"]
                 public["credit"] = f"{track['artist']} - {track['title']} [NCS Release]\nMusic provided by NoCopyrightSounds.\nFree Download / Stream: {track['page']}"
                 tracks.append(public)
             self.send_json(200, {"tracks": tracks})
